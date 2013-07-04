@@ -38,6 +38,11 @@
 @interface UIButton (AFNetworking)
 
 - (void)setImageWithURL:(NSURL *)url placeholderImage:(UIImage *)placeholderImage forState:(UIControlState)state;
+- (void)setImageWithURL:(NSURL *)url
+       placeholderImage:(UIImage *)placeholderImage
+               forState:(UIControlState)state
+                success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image))success
+                failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure;
 
 @end
 

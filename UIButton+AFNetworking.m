@@ -54,12 +54,26 @@ static char kAFImageRequestOperationObjectKey;
 
 @implementation UIButton (AFNetworking)
 
-- (void)setImageWithURL:(NSURL *)url placeholderImage:(UIImage *)placeholderImage forState:(UIControlState)state {
+- (void)setImageWithURL:(NSURL *)url placeholderImage:(UIImage *)placeholderImage forState:(UIControlState)state
+{
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:30.0];
     [request setHTTPShouldHandleCookies:NO];
     [request setHTTPShouldUsePipelining:YES];
     
     [self setImageWithURLRequest:request placeholderImage:placeholderImage forState:state success:nil failure:nil];
+}
+
+- (void)setImageWithURL:(NSURL *)url
+       placeholderImage:(UIImage *)placeholderImage
+               forState:(UIControlState)state
+                success:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image))success
+                failure:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failure
+{
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:30.0];
+    [request setHTTPShouldHandleCookies:NO];
+    [request setHTTPShouldUsePipelining:YES];
+    
+    [self setImageWithURLRequest:request placeholderImage:placeholderImage forState:state success:success failure:failure];
 }
 
 - (void)setImageWithURLRequest:(NSURLRequest *)urlRequest 
@@ -82,28 +96,30 @@ static char kAFImageRequestOperationObjectKey;
         [self setImage:placeholderImage forState:state];
         
         AFImageRequestOperation *requestOperation = [[AFImageRequestOperation alloc] initWithRequest:urlRequest];
+        __weak UIButton *weakSelf = self;
         [requestOperation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+            UIButton *strongSelf = weakSelf;
             if ([[urlRequest URL] isEqual:[[self.af_imageRequestOperation request] URL]]) {
-                [self setImage:responseObject forState:state];
-                self.af_imageRequestOperation = nil;
+                [strongSelf setImage:responseObject forState:state];
+                strongSelf.af_imageRequestOperation = nil;
             }
             
             if (success) {
                 success(operation.request, operation.response, responseObject);
             }
             
-            [[[self class] af_sharedImageCache] cacheImage:responseObject forRequest:urlRequest];
+            [[[strongSelf class] af_sharedImageCache] cacheImage:responseObject forRequest:urlRequest];
             
             
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            UIButton *strongSelf = weakSelf;
             if ([[urlRequest URL] isEqual:[[self.af_imageRequestOperation request] URL]]) {
-                self.af_imageRequestOperation = nil;
+                strongSelf.af_imageRequestOperation = nil;
             }
             
             if (failure) {
                 failure(operation.request, operation.response, error);
-            }
-            
+            }            
         }];
         
         self.af_imageRequestOperation = requestOperation;
